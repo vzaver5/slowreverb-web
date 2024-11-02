@@ -28,6 +28,18 @@
   color: #61dafb;
 }
 
+.Title {
+    font-family: "Honk", system-ui;
+    font-optical-sizing: auto;
+    font-weight: 400;
+    font-style: normal;
+    font-variation-settings: "MORF" 15, "SHLN" 50;
+    font-size: 70px;
+    padding: 50px;
+    justify-content: center;
+    text-align: center;
+    letter-spacing: 10px;
+}
 
 @keyframes App-logo-spin {
   from {
