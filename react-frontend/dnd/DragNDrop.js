@@ -1,50 +1,29 @@
 import React, { useEffect, useState } from "react";
 import { AiOutlineCheckCircle, AiOutlineCloudUpload } from "react-icons/ai";
 import { MdClear } from "react-icons/md";
+import { Audio } from "react-loader-spinner";
 import "./drag-drop.css";
 
-function runFlaskSlowReverbWork(file) {
-    alert("Button Pressed")
-    console.log("Uploading file: ", file.name);
+function Spinner() {
+    return <Audio
+        height="80"
+        width="80"
+        radius="9"
+        color="#1b1f3b"
+        ariaLabel="audio-loading"
+        wrapperStyle
+        wrapperClass
+    />;
+}
 
-    if (!file) {
-        alert('Please select a file first');
-        return;
+const checkFileType = (file, index) => {
+    console.log("file has been added");
+
+    if(!file.name.includes(".flac")) {
+        alert("Upload ONLY .flac files.")
+        this.handleRemoveFile(index);
     }
 
-    const formData = new FormData();
-    formData.append('file', file);
-
-    fetch('http://127.0.0.1:5000/process-file', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => {
-        console.log("Response Status: ", response.status);
-        console.log("Response Headers: ", [...response.headers.entries()]);
-
-        if (!response.ok) {
-            return response.json().then(err => { throw new Error(err.error); });
-        }
-        return response.blob();
-    })
-    .then(blob => {
-        console.log("Received blob", blob);
-
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = file.name;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        alert('File processed and downloaded successfully');
-        
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
 }
 
 const DragNdrop = ({
@@ -53,6 +32,7 @@ const DragNdrop = ({
     height,
 }) => {
     const [files, setFiles] = useState([]);
+    const [loading, setLoading] = useState(false);
     const [downloadUrl, setDownloadUrl] = useState(null);
 
     const handleFileChange = (event) => {
@@ -79,6 +59,53 @@ const DragNdrop = ({
         onFilesSelected(files);
     }, [files, onFilesSelected]);
 
+    async function runFlaskSlowReverbWork(files) {
+        if (!files || files.length === 0) {
+            alert('Please select at least one file');
+            return;
+        }
+        setLoading(true);   //Show the spinner
+
+        try {
+            for (const file of files) {
+                console.log("Uploading file: ", file.name);
+                const formData = new FormData();
+                formData.append('file', file);
+                console.log(file);
+
+                const response = await fetch('https://slowreverbsoundbot.pythonanywhere.com/process-file', {
+                    method: 'POST',
+                    body: formData,
+                    signal: AbortSignal.timeout(600000)
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.error);
+                }
+
+                const blob = await response.blob();
+                const slowedReverberatedFile = file.name.split(".")[0].concat("SlowedReverbedFree.wav");
+                const url = URL.createObjectURL(blob);
+
+                //Download file after processing
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = slowedReverberatedFile;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                console.log("File name received", file.name);
+            }
+            console.log("All files processed and downloaded succesfully")
+        } catch (error) {
+            console.error('Error:', error);
+        } finally {
+            setLoading(false);
+        }
+    }
+
     return (
         <section className="drag-drop" style={{ width: width, height: height }}>
             <div
@@ -92,7 +119,7 @@ const DragNdrop = ({
                         <AiOutlineCloudUpload />
                         <div>
                             <p>Drag and drop your files here</p>
-                            <p>Supported file: .flac</p>
+                            <p>Supported files: .flac, .wav, .mp3</p>
                         </div>
                     </div>
                     <input
@@ -100,7 +127,7 @@ const DragNdrop = ({
                         hidden
                         id="browse"
                         onChange={handleFileChange}
-                        accept=".flac"
+                        accept="audio/*"
                         multiple
                     />
                     <label htmlFor="browse" className="browse-btn">
@@ -123,13 +150,21 @@ const DragNdrop = ({
                             ))}
                         </div>
                     </div>
-                )}
+                 )}
             </div>
 
-            <div>
+            <div style={{ padding: "10px" }}>
                 {files.length > 0 && (
                     <div className="success-file">
-                        <button type="button" className="upload-btn" onClick={() => runFlaskSlowReverbWork(files[0])}>SlowAndReverberate</button>
+                        {loading && (
+                            <div className="spinner-overlay">
+                                <div className="spinner-content">
+                                    <Spinner />
+                                    <div className="audio-loader-text"> Loading...</div>
+                                </div>
+                            </div>
+                         )}
+                        <button type="button" className="upload-btn" onClick={() => runFlaskSlowReverbWork(files)}>SlowAndReverberate</button>
                         {downloadUrl && (
                             <a href={downloadUrl} download="processed_audio.wav">Download Processed File</a>
                         )}
