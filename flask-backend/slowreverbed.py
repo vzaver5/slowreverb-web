@@ -1,7 +1,7 @@
 from pyo import Server, SndTable, SfPlayer, Freeverb, sndinfo
 import sys
 
-def slow_reverberate_work(original_file):
+def slow_reverberate_work(original_file, speed):
     print("Processing file(srw): ", original_file, file=sys.stderr)
     s = Server(audio='offline').boot()
 
@@ -9,7 +9,7 @@ def slow_reverberate_work(original_file):
     print(info, file =sys.stderr)
     t = SndTable(original_file)
 	#Adjust pitchAdj to change speed/pitch
-    pitchAdj = .81
+    pitchAdj = float(speed)
     length = t.getDur()/pitchAdj
 
     a = SfPlayer(original_file, pitchAdj, mul=.6)

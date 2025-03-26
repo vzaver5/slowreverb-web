@@ -28,6 +28,9 @@ if not os.path.exists(song_upload_dir):
 def process_file():
     if 'file' not in request.files:
         return jsonify({"error": "No file part in the request"}), 400
+    speed = request.form.get('speed')
+    if speed is None:
+        return jsonify({"error": "Speed has not been sent"}), 400
 
     file = request.files['file']
 
@@ -37,22 +40,24 @@ def process_file():
     print(file, file=sys.stderr)
     print(file.filename, file=sys.stderr)
 
+    print("Selected speed: ", speed, file=sys.stderr)
+
     #Original file no changes to format
     original_file_path = os.path.join(song_upload_dir, file.filename)
     print("Original File(no changes to format): ", original_file_path, file=sys.stderr)
     file.save(original_file_path)
     upload_path = ""
-    
+
     if file.filename.endswith(".mp3"):
         upload_path = mp3_upload_path_work(original_file_path)
     else:
         upload_path = lossless_upload_path_work(original_file_path)
         file.seek(0)    #File saved once so it's pointer needs to start over
         file.save(upload_path)
-        
+
     #Process the file
     print("Upload path is: ", upload_path, file=sys.stderr)
-    processed_file_path = slow_reverberate_work(upload_path)
+    processed_file_path = slow_reverberate_work(upload_path, speed)
     print("Processed file:", processed_file_path, file=sys.stderr)
 
     # Return the processed file
@@ -66,7 +71,7 @@ def process_file():
         print("---------------------------------------", file=sys.stderr)
     except FileNotFoundError:
         print("Files do not exist", file=sys.stderr)
-        
+
     return ret_file
 
 @app.after_request
@@ -87,7 +92,7 @@ def mp3_upload_path_work(original_file_path):
     print("New Location for mp3 file(wav): ", wav_upload_path,file=sys.stderr)
     sound.export(wav_upload_path, format="wav", parameters=["-acodec", "pcm_s16le"])
     return wav_upload_path
-    
+
 #Lossless Found
 #Change ext to .wav
 def lossless_upload_path_work(original_file_path):
