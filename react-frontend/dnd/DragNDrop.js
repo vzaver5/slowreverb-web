@@ -3,6 +3,7 @@ import { AiOutlineCheckCircle, AiOutlineCloudUpload } from "react-icons/ai";
 import { MdClear } from "react-icons/md";
 import { Audio } from "react-loader-spinner";
 import "./drag-drop.css";
+import SpeedSlider from "./Speedslider.js";
 
 function Spinner() {
     return <Audio
@@ -34,6 +35,7 @@ const DragNdrop = ({
     const [files, setFiles] = useState([]);
     const [loading, setLoading] = useState(false);
     const [downloadUrl, setDownloadUrl] = useState(null);
+    const [sliderValue, setSliderValue] = useState(.80);
 
     const handleFileChange = (event) => {
         const selectedFiles = event.target.files;
@@ -71,7 +73,9 @@ const DragNdrop = ({
                 console.log("Uploading file: ", file.name);
                 const formData = new FormData();
                 formData.append('file', file);
+                formData.append('speed', sliderValue);           //Add the sliderValue to the formData so it knows what speed to set.
                 console.log(file);
+                console.log(sliderValue);
 
                 const response = await fetch('https://slowreverbsoundbot.pythonanywhere.com/process-file', {
                     method: 'POST',
@@ -155,7 +159,7 @@ const DragNdrop = ({
 
             <div style={{ padding: "10px" }}>
                 {files.length > 0 && (
-                    <div className="success-file">
+                    <div style={{ display: 'flex', alignItems: 'center' }} className="success-file">
                         {loading && (
                             <div className="spinner-overlay">
                                 <div className="spinner-content">
@@ -163,8 +167,9 @@ const DragNdrop = ({
                                     <div className="audio-loader-text"> Loading...</div>
                                 </div>
                             </div>
-                         )}
-                        <button type="button" className="upload-btn" onClick={() => runFlaskSlowReverbWork(files)}>SlowAndReverberate</button>
+                        )}
+                        <SpeedSlider value={sliderValue} setValue={setSliderValue} />
+                        <button style={{ marginLeft: '8%' }} type="button" className="upload-btn" onClick={() => runFlaskSlowReverbWork(files)}>SlowAndReverberate</button>
                         {downloadUrl && (
                             <a href={downloadUrl} download="processed_audio.wav">Download Processed File</a>
                         )}
