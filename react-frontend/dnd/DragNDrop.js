@@ -143,7 +143,7 @@ const DragNdrop = ({
                     <div className="file-list">
                         <div className="file-list__container">
                             {files.map((file, index) => (
-                                <div className="file-item" key={index}>
+                                <div className="file-item" key={index} style={{ display: "flex"}}>
                                     <div className="file-info">
                                         <p>{file.name}</p>
                                     </div>
